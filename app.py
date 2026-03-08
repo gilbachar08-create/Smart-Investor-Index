@@ -106,3 +106,31 @@ col2.metric("Credit Stress (HYG/IEF)", f"{credit_val:.2f}")
 col3.metric("Market Breadth (RSP/SPY)", f"{breadth_val:.2f}")
 
 st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | *Built for strategic asset allocation.*")
+
+# --- 7. HISTORICAL TREND GRAPH ---
+st.markdown("---")
+st.subheader("📊 30-Day Index Trend")
+
+# חישוב המדד לכל יום בהיסטוריה
+hist_df = df.copy()
+# נרמול הנתונים כמו שעשינו למדד הראשי, רק על כל הטבלה
+vix_norm_h = 100 - ((hist_df['^VIX'] - 10) / (40 - 10) * 100).clip(0, 100)
+breadth_norm_h = ((hist_df['RSP'] / hist_df['SPY'] - 0.20) / (0.35 - 0.20) * 100).clip(0, 100)
+credit_norm_h = ((hist_df['HYG'] / hist_df['IEF'] - 0.75) / (0.95 - 0.75) * 100).clip(0, 100)
+
+hist_df['SII'] = (vix_norm_h * 0.4) + (breadth_norm_h * 0.3) + (credit_norm_h * 0.3)
+
+# יצירת הגרף
+import plotly.express as px
+fig_hist = px.line(hist_df.tail(30), y='SII', title=None, labels={'SII': 'Index Value', 'Date': ''})
+fig_hist.update_traces(line_color='#00ff00', line_width=3) # קו ירוק זוהר שמתאים ל-Dark Mode
+fig_hist.update_layout(
+    hovermode="x unified",
+    yaxis_range=[0, 100],
+    height=300,
+    margin=dict(l=20, r=20, t=20, b=20),
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)'
+)
+
+st.plotly_chart(fig_hist, use_container_width=True)

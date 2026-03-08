@@ -14,16 +14,23 @@ st.markdown("**Strategic Capital Compass for Long-Term Investors**")
 st.markdown("---")
 
 # --- 2. DATA ACQUISITION (Live Data) ---
-@st.cache_data(ttl=3600) # Cache data for 1 hour to load website fast
+@st.cache_data(ttl=3600)
 def get_market_data():
     end_dt = datetime.now()
     start_dt = end_dt - timedelta(days=365)
     tickers = ['^VIX', 'SPY', 'RSP', 'HYG', 'IEF']
-    df = yf.download(tickers, start=start_dt, end=end_dt, progress=False)['Close'].dropna()
+    # משיכת הנתונים עם השלמה אוטומטית של חוסרים כדי למנוע קריסה
+    df = yf.download(tickers, start=start_dt, end=end_dt, progress=False)['Close']
+    df = df.ffill().dropna() 
     return df
 
 with st.spinner('Fetching real-time market data...'):
     df = get_market_data()
+
+# חגורת בטיחות: אם יאהו חסמו זמנית את השרת או החזירו טבלה ריקה
+if df.empty:
+    st.warning("⚠️ Yahoo Finance is temporarily syncing data. Please refresh the page in a few seconds.")
+    st.stop()
 
 vix_val = df['^VIX'].iloc[-1]
 breadth_val = (df['RSP'] / df['SPY']).iloc[-1]

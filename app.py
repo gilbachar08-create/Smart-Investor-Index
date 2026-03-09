@@ -74,19 +74,19 @@ else:
 st.markdown("---")
 st.subheader("SII Compass - Current Strategic Reading")
 
-# פתרון לבעיה 2: הצגת המספר הספציפי בצורה בולטת וענקית מעל השעון
-col1, col2, col3 = st.columns([1, 2, 1]) # ממרכזים את המספר
+# הצגת המספר הספציפי בצורה בולטת וענקית מעל השעון
+col1, col2, col3 = st.columns([1, 2, 1]) 
 with col2:
     st.metric(label="Current Index Score", value=f"{final_idx:.1f}")
 
 # הגדרת השעון
 fig = go.Figure(go.Indicator(
-    mode = "gauge+needle",
+    mode = "gauge", # <--- התיקון כאן
     value = final_idx,
     domain = {'x': [0, 1], 'y': [0, 1]},
     gauge = {
         'axis': {'range': [0, 100], 'tickwidth': 2, 'tickcolor': "white"},
-        'bar': {'color': "white"}, # צבע המחוג
+        'bar': {'color': "white"}, 
         'bgcolor': "rgba(0,0,0,0)",
         'borderwidth': 2,
         'bordercolor': "gray",
@@ -98,10 +98,10 @@ fig = go.Figure(go.Indicator(
     }
 ))
 
-# פתרון לבעיה 1: כיווץ גובה השעון והשוליים שלו כדי שלא יהיה "גדול מדי"
+# כיווץ גובה השעון והשוליים שלו כדי שלא יהיה "גדול מדי"
 fig.update_layout(
-    height=300, # מקטינים את הגובה (בצילומים זה נראה כמו 600+)
-    margin=dict(l=30, r=30, t=10, b=10), # מצמצמים שוליים כדי לדחוס את הגרף
+    height=300, 
+    margin=dict(l=30, r=30, t=10, b=10), 
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
 )

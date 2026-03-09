@@ -98,10 +98,13 @@ st.plotly_chart(fig, use_container_width=True)
 
 # --- 6. ACTIONABLE INSIGHTS UI ---
 if final_idx <= 35:
+    action = "STRATEGIC ACCUMULATION: Build long-term positions in high-quality assets. Deep value zone."
     st.error(f"**Strategic Instruction:** {action}")
 elif final_idx > 65:
+    action = "SWING TRADING MODE: Focus on momentum and short-term trends. Protect long-term gains."
     st.success(f"**Strategic Instruction:** {action}")
 else:
+    action = "NEUTRAL MONITORING: Maintain current allocations. No major strategic shifts required."
     st.info(f"**Strategic Instruction:** {action}")
 
 st.markdown("---")

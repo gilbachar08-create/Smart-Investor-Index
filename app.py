@@ -116,8 +116,8 @@ with col_left:
 
     # ציור המחוג בעזרת קו ועיגול (Shapes)
     fig.update_layout(
-        height=250, # קצת יותר קטן כדי להתאים לעמודה 
-        margin=dict(l=10, r=10, t=10, b=10), 
+        height=280, # החזרנו קצת גובה כדי שהמספר ייכנס
+        margin=dict(l=10, r=10, t=10, b=50), # הקסם כאן: b=50 נותן רווח למטה בדיוק עבור המספר
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         shapes=[

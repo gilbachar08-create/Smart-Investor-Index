@@ -79,7 +79,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.metric(label="Current Index Score", value=f"{final_idx:.1f}")
 
-# הגדרת השעון הבסיסי (רק הצבעים והמספר למטה, הופכים את הפס השחור לשקוף)
+# הגדרת השעון הבסיסי 
 fig = go.Figure(go.Indicator(
     mode = "gauge+number",
     value = final_idx,
@@ -87,7 +87,7 @@ fig = go.Figure(go.Indicator(
     number = {'font': {'size': 40, 'color': 'white'}},
     gauge = {
         'axis': {'range': [0, 100], 'tickwidth': 2, 'tickcolor': "white"},
-        'bar': {'color': "rgba(0,0,0,0)"}, # פס שקוף כדי להעלים את המדד הישן
+        'bar': {'color': "rgba(0,0,0,0)"}, # מחביא את הפס המקורי
         'bgcolor': "rgba(0,0,0,0)",
         'borderwidth': 2,
         'bordercolor': "gray",
@@ -99,36 +99,42 @@ fig = go.Figure(go.Indicator(
     }
 ))
 
-# מתמטיקה של חצים: חישוב זווית המחוג לפי הערך
+# מתמטיקה של המחוג: חישוב הזווית
 angle = 180 - (final_idx / 100) * 180
 theta = math.radians(angle)
 
-# מיקום העוגן של החץ (מרכז השעון, קצת מעל המספר)
+# מיקום מרכז השעון ואורך המחוג
 x_center = 0.5
 y_center = 0.25 
+r = 0.35 
 
-# אורך המחוג
-r = 0.45 
-
-# מיקום הקצה של ראש החץ
+# מיקום קצה המחוג
 x_tip = x_center + r * math.cos(theta)
 y_tip = y_center + r * math.sin(theta)
 
-# הוספת המחוג לגרף
+# ציור המחוג בעזרת קו ועיגול (Shapes) - חסין תקלות!
 fig.update_layout(
     height=300, 
     margin=dict(l=30, r=30, t=10, b=10), 
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
-    annotations=[
+    shapes=[
+        # קו המחוג
         dict(
-            ax=x_center, ay=y_center, axref='paper', ayref='paper', # זנב החץ
-            x=x_tip, y=y_tip, xref='paper', yref='paper',           # ראש החץ
-            showarrow=True,
-            arrowhead=2,     # סגנון המשולש בקצה
-            arrowsize=1.5,   # גודל הראש
-            arrowwidth=4,    # עובי המחוג
-            arrowcolor="white" # צבע המחוג
+            type='line',
+            x0=x_center, y0=y_center,
+            x1=x_tip, y1=y_tip,
+            xref='paper', yref='paper',
+            line=dict(color='white', width=5)
+        ),
+        # העיגול במרכז (ציר המחוג)
+        dict(
+            type='circle',
+            x0=x_center-0.02, y0=y_center-0.02,
+            x1=x_center+0.02, y1=y_center+0.02,
+            xref='paper', yref='paper',
+            fillcolor='white',
+            line_color='white'
         )
     ]
 )

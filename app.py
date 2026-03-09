@@ -80,13 +80,15 @@ with col2:
     st.metric(label="Current Index Score", value=f"{final_idx:.1f}")
 
 # הגדרת השעון
+# הגדרת השעון עם מספר פנימי ופס מדד שחור ובולט
 fig = go.Figure(go.Indicator(
-    mode = "gauge", # <--- התיקון כאן
+    mode = "gauge+number", # מחזיר את המספר למרכז הקשת
     value = final_idx,
     domain = {'x': [0, 1], 'y': [0, 1]},
+    number = {'font': {'size': 40, 'color': 'white'}}, # עיצוב המספר שבתוך השעון
     gauge = {
         'axis': {'range': [0, 100], 'tickwidth': 2, 'tickcolor': "white"},
-        'bar': {'color': "white"}, 
+        'bar': {'color': "#111111", 'thickness': 0.25}, # פס שחור עמוק ודק יותר שחותך את הצבעים
         'bgcolor': "rgba(0,0,0,0)",
         'borderwidth': 2,
         'bordercolor': "gray",

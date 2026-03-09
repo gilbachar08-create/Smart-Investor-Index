@@ -159,12 +159,16 @@ with col_right:
     hist_df['SII'] = (vix_norm_h * 0.4) + (breadth_norm_h * 0.3) + (credit_norm_h * 0.3)
 
     # יצירת הגרף ההיסטורי
+    # יצירת הגרף ההיסטורי
     fig_hist = px.line(hist_df.tail(30), y='SII', title=None, labels={'SII': 'Index Value', 'Date': ''})
-    fig_hist.update_traces(line_color='#00ff00', line_width=3)
+    
+    # שינוי 1: הוספת נקודות (markers) על הקו
+    fig_hist.update_traces(line_color='#00ff00', line_width=3, mode='lines+markers', marker=dict(size=5))
+    
+    # שינוי 2: מחיקת הנעילה של ציר Y כדי לאפשר זום אוטומטי
     fig_hist.update_layout(
         hovermode="x unified",
-        yaxis_range=[0, 100],
-        height=200, # גובה קומפקטי
+        height=200, 
         margin=dict(l=0, r=0, t=10, b=0),
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)'

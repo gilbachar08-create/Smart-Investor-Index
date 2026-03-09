@@ -71,24 +71,23 @@ else:
     status, action, color = "EUPHORIA", "EXECUTE HARVEST: Take partial profits & hedge.", "#4bff4b"
 
 # --- 5. GAUGE DISPLAY ---
+import math
 st.markdown("---")
 st.subheader("SII Compass - Current Strategic Reading")
 
-# הצגת המספר הספציפי בצורה בולטת וענקית מעל השעון
 col1, col2, col3 = st.columns([1, 2, 1]) 
 with col2:
     st.metric(label="Current Index Score", value=f"{final_idx:.1f}")
 
-# הגדרת השעון
-# הגדרת השעון עם מספר פנימי ופס מדד שחור ובולט
+# הגדרת השעון הבסיסי (רק הצבעים והמספר למטה, הופכים את הפס השחור לשקוף)
 fig = go.Figure(go.Indicator(
-    mode = "gauge+number", # מחזיר את המספר למרכז הקשת
+    mode = "gauge+number",
     value = final_idx,
     domain = {'x': [0, 1], 'y': [0, 1]},
-    number = {'font': {'size': 40, 'color': 'white'}}, # עיצוב המספר שבתוך השעון
+    number = {'font': {'size': 40, 'color': 'white'}},
     gauge = {
         'axis': {'range': [0, 100], 'tickwidth': 2, 'tickcolor': "white"},
-        'bar': {'color': "#111111", 'thickness': 0.25}, # פס שחור עמוק ודק יותר שחותך את הצבעים
+        'bar': {'color': "rgba(0,0,0,0)"}, # פס שקוף כדי להעלים את המדד הישן
         'bgcolor': "rgba(0,0,0,0)",
         'borderwidth': 2,
         'bordercolor': "gray",
@@ -100,12 +99,38 @@ fig = go.Figure(go.Indicator(
     }
 ))
 
-# כיווץ גובה השעון והשוליים שלו כדי שלא יהיה "גדול מדי"
+# מתמטיקה של חצים: חישוב זווית המחוג לפי הערך
+angle = 180 - (final_idx / 100) * 180
+theta = math.radians(angle)
+
+# מיקום העוגן של החץ (מרכז השעון, קצת מעל המספר)
+x_center = 0.5
+y_center = 0.25 
+
+# אורך המחוג
+r = 0.45 
+
+# מיקום הקצה של ראש החץ
+x_tip = x_center + r * math.cos(theta)
+y_tip = y_center + r * math.sin(theta)
+
+# הוספת המחוג לגרף
 fig.update_layout(
     height=300, 
     margin=dict(l=30, r=30, t=10, b=10), 
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
+    annotations=[
+        dict(
+            ax=x_center, ay=y_center, axref='paper', ayref='paper', # זנב החץ
+            x=x_tip, y=y_tip, xref='paper', yref='paper',           # ראש החץ
+            showarrow=True,
+            arrowhead=2,     # סגנון המשולש בקצה
+            arrowsize=1.5,   # גודל הראש
+            arrowwidth=4,    # עובי המחוג
+            arrowcolor="white" # צבע המחוג
+        )
+    ]
 )
 
 st.plotly_chart(fig, use_container_width=True)

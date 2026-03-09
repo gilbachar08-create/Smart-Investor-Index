@@ -70,30 +70,42 @@ elif final_idx <= 75.0:
 else:
     status, action, color = "EUPHORIA", "EXECUTE HARVEST: Take partial profits & hedge.", "#4bff4b"
 
-# --- 5. INTERACTIVE GAUGE CHART (Plotly) ---
+# --- 5. GAUGE DISPLAY ---
+st.markdown("---")
+st.subheader("SII Compass - Current Strategic Reading")
+
+# פתרון לבעיה 2: הצגת המספר הספציפי בצורה בולטת וענקית מעל השעון
+col1, col2, col3 = st.columns([1, 2, 1]) # ממרכזים את המספר
+with col2:
+    st.metric(label="Current Index Score", value=f"{final_idx:.1f}")
+
+# הגדרת השעון
 fig = go.Figure(go.Indicator(
-    mode = "gauge+number",
+    mode = "gauge+needle",
     value = final_idx,
     domain = {'x': [0, 1], 'y': [0, 1]},
-    title = {'text': f"Current Status: {status}", 'font': {'size': 24}},
-    number = {'font': {'size': 60, 'color': 'black'}, 'valueformat': ".1f"},
     gauge = {
-        'axis': {'range': [0, 100], 'tickwidth': 2, 'tickcolor': "black", 'tickfont': {'size': 18, 'color': 'black', 'family': 'Arial Black'}},
-        'bar': {'color': "black", 'thickness': 0.15},
-        'bgcolor': "white",
+        'axis': {'range': [0, 100], 'tickwidth': 2, 'tickcolor': "white"},
+        'bar': {'color': "white"}, # צבע המחוג
+        'bgcolor': "rgba(0,0,0,0)",
         'borderwidth': 2,
         'bordercolor': "gray",
         'steps': [
-            {'range': [0, 25], 'color': '#ff4b4b'},    # Deep Fear
-            {'range': [25, 35], 'color': '#ffb347'},   # Fear Warning
-            {'range': [35, 65], 'color': '#e0e0e0'},   # Neutral
-            {'range': [65, 75], 'color': '#90ee90'},   # Greed Warning
-            {'range': [75, 100], 'color': '#4bff4b'}   # Euphoria
+            {'range': [0, 35], 'color': 'red'},
+            {'range': [35, 65], 'color': 'yellow'},
+            {'range': [65, 100], 'color': 'green'}
         ],
     }
 ))
 
-fig.update_layout(height=400, margin=dict(l=50, r=50, t=50, b=20))
+# פתרון לבעיה 1: כיווץ גובה השעון והשוליים שלו כדי שלא יהיה "גדול מדי"
+fig.update_layout(
+    height=300, # מקטינים את הגובה (בצילומים זה נראה כמו 600+)
+    margin=dict(l=30, r=30, t=10, b=10), # מצמצמים שוליים כדי לדחוס את הגרף
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+)
+
 st.plotly_chart(fig, use_container_width=True)
 
 # --- 6. ACTIONABLE INSIGHTS UI ---

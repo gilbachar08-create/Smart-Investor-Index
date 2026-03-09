@@ -16,34 +16,36 @@ st.markdown("---")
 # --- 2. DATA ACQUISITION (Live Data) ---
 @st.cache_data(ttl=3600)
 def get_market_data():
-    end_dt = datetime.now()
-    start_dt = end_dt - timedelta(days=365)
     tickers = ['^VIX', 'SPY', 'RSP', 'HYG', 'IEF']
+    import pandas as pd
+    df = pd.DataFrame()
     
-    # משיכת הנתונים
-    df = yf.download(tickers, start=start_dt, end=end_dt, progress=False)['Close']
-    
-    # השלמת חוסרים (לוקח את יום שישי ומעתיק ליום שני) בלי למחוק את הטבלה
-    df = df.ffill() 
+    # משיכת נתונים אחד-אחד כדי לעקוף באגים של יאהו
+    for ticker in tickers:
+        try:
+            # מושכים שנה אחרונה לכל מדד
+            t_data = yf.Ticker(ticker).history(period="1y")['Close']
+            df[ticker] = t_data
+        except Exception:
+            pass
+            
+    # פקודת ה"קסם": אם חסר נתון להיום, קח את הנתון של אתמול/יום שישי והעתק אותו קדימה
+    df = df.ffill().dropna()
     return df
 
 with st.spinner('Fetching real-time market data...'):
     df = get_market_data()
 
-# בדיקה קריטית: האם יאהו לא החזיר נתונים בכלל?
-if df.empty or len(df) == 0:
+# בדיקה שהטבלה לא ריקה לחלוטין
+if df.empty:
     st.error("🚨 Yahoo Finance connection issue. No data received.")
     st.stop()
 
-try:
-    # ניסיון למשוך את הנתון החוקי האחרון לכל מדד
-    vix_val = df['^VIX'].dropna().iloc[-1]
-    breadth_val = (df['RSP'] / df['SPY']).dropna().iloc[-1]
-    credit_val = (df['HYG'] / df['IEF']).dropna().iloc[-1]
-except IndexError:
-    # מלכודת: אם יאהו החזיר עמודה ספציפית ריקה לחלוטין
-    st.warning("⚠️ Yahoo Finance is temporarily syncing specific tickers. Waiting for market open...")
-    st.stop()
+# שליפת הנתון החוקי האחרון הזמין
+vix_val = df['^VIX'].iloc[-1]
+breadth_val = (df['RSP'] / df['SPY']).iloc[-1]
+credit_val = (df['HYG'] / df['IEF']).iloc[-1]
+
 
 
 # --- 3. SCORING ENGINE (The Math) ---

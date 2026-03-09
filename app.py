@@ -19,22 +19,27 @@ def get_market_data():
     end_dt = datetime.now()
     start_dt = end_dt - timedelta(days=365)
     tickers = ['^VIX', 'SPY', 'RSP', 'HYG', 'IEF']
-    # משיכת הנתונים עם השלמה אוטומטית של חוסרים כדי למנוע קריסה
+    
+    # משיכת הנתונים
     df = yf.download(tickers, start=start_dt, end=end_dt, progress=False)['Close']
-    df = df.ffill().dropna() 
+    
+    # השלמת חוסרים (לוקח את יום שישי ומעתיק ליום שני) בלי למחוק את הטבלה
+    df = df.ffill() 
     return df
 
 with st.spinner('Fetching real-time market data...'):
     df = get_market_data()
 
-# חגורת בטיחות: אם יאהו חסמו זמנית את השרת או החזירו טבלה ריקה
-if df.empty:
-    st.warning("⚠️ Yahoo Finance is temporarily syncing data. Please refresh the page in a few seconds.")
+# בדיקה קריטית: האם יאהו לא החזיר נתונים בכלל?
+if df.empty or len(df) == 0:
+    st.error("🚨 Yahoo Finance connection issue. No data received.")
     st.stop()
 
-vix_val = df['^VIX'].iloc[-1]
-breadth_val = (df['RSP'] / df['SPY']).iloc[-1]
-credit_val = (df['HYG'] / df['IEF']).iloc[-1]
+# לקיחת הנתון התקין האחרון לכל מדד בנפרד
+vix_val = df['^VIX'].dropna().iloc[-1]
+breadth_val = (df['RSP'] / df['SPY']).dropna().iloc[-1]
+credit_val = (df['HYG'] / df['IEF']).dropna().iloc[-1]
+
 
 # --- 3. SCORING ENGINE (The Math) ---
 def calculate_vix_score(v):

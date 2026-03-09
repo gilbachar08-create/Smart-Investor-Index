@@ -17,35 +17,29 @@ st.markdown("---")
 @st.cache_data(ttl=3600)
 def get_market_data():
     tickers = ['^VIX', 'SPY', 'RSP', 'HYG', 'IEF']
-    import pandas as pd
-    df = pd.DataFrame()
-    
-    # משיכת נתונים אחד-אחד כדי לעקוף באגים של יאהו
-    for ticker in tickers:
-        try:
-            # מושכים שנה אחרונה לכל מדד
-            t_data = yf.Ticker(ticker).history(period="1y")['Close']
-            df[ticker] = t_data
-        except Exception:
-            pass
-            
-    # פקודת ה"קסם": אם חסר נתון להיום, קח את הנתון של אתמול/יום שישי והעתק אותו קדימה
-    df = df.ffill().dropna()
+    # מושכים נתונים מרוכזים כדי להבטיח שכל העמודות קיימות
+    df = yf.download(tickers, period="6mo", progress=False)['Close']
     return df
 
 with st.spinner('Fetching real-time market data...'):
     df = get_market_data()
 
-# בדיקה שהטבלה לא ריקה לחלוטין
-if df.empty:
-    st.error("🚨 Yahoo Finance connection issue. No data received.")
+# חגורת בטיחות למקרה של ניתוק מוחלט מהשרת
+if df.empty or '^VIX' not in df.columns:
+    st.warning("⚠️ Waiting for Yahoo Finance to sync data...")
     st.stop()
 
-# שליפת הנתון החוקי האחרון הזמין
-vix_val = df['^VIX'].iloc[-1]
-breadth_val = (df['RSP'] / df['SPY']).iloc[-1]
-credit_val = (df['HYG'] / df['IEF']).iloc[-1]
+# פקודת הקסם: ממלאת חללים של היום עם הנתון האחרון (יום שישי)
+df_clean = df.ffill()
 
+try:
+    # שליפת הנתון האחרון שידוע לנו
+    vix_val = df_clean['^VIX'].dropna().iloc[-1]
+    breadth_val = (df_clean['RSP'] / df_clean['SPY']).dropna().iloc[-1]
+    credit_val = (df_clean['HYG'] / df_clean['IEF']).dropna().iloc[-1]
+except Exception:
+    st.warning("⚠️ Yahoo Finance is temporarily syncing specific tickers. Waiting for market open...")
+    st.stop()
 
 
 # --- 3. SCORING ENGINE (The Math) ---

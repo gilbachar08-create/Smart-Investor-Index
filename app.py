@@ -35,10 +35,15 @@ if df.empty or len(df) == 0:
     st.error("🚨 Yahoo Finance connection issue. No data received.")
     st.stop()
 
-# לקיחת הנתון התקין האחרון לכל מדד בנפרד
-vix_val = df['^VIX'].dropna().iloc[-1]
-breadth_val = (df['RSP'] / df['SPY']).dropna().iloc[-1]
-credit_val = (df['HYG'] / df['IEF']).dropna().iloc[-1]
+try:
+    # ניסיון למשוך את הנתון החוקי האחרון לכל מדד
+    vix_val = df['^VIX'].dropna().iloc[-1]
+    breadth_val = (df['RSP'] / df['SPY']).dropna().iloc[-1]
+    credit_val = (df['HYG'] / df['IEF']).dropna().iloc[-1]
+except IndexError:
+    # מלכודת: אם יאהו החזיר עמודה ספציפית ריקה לחלוטין
+    st.warning("⚠️ Yahoo Finance is temporarily syncing specific tickers. Waiting for market open...")
+    st.stop()
 
 
 # --- 3. SCORING ENGINE (The Math) ---

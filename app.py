@@ -15,7 +15,28 @@ st.set_page_config(page_title="Smart Investor Index", page_icon="🛡️", layou
 st.title("🛡️ Smart Investor Index (SII)")
 st.markdown("**Strategic Capital Compass for Long-Term Investors**")
 st.markdown("---")
-
+# --- SIDEBAR: CREATOR & COMMUNITY ---
+with st.sidebar:
+    st.markdown("### 🛡️ The Proactive Pension Manager")
+    st.markdown("*I don't predict the market; I engineer portfolios to withstand it.*")
+    
+    st.markdown("---")
+    
+    st.markdown("**1. Join the Community**")
+    st.markdown("[🐦 Follow on X (@ProactivePen)](https://x.com/ProactivePen)")
+    
+    st.markdown("**2. The Strategy Playbook**")
+    st.markdown("[📓 Read my full framework on Notion](https://www.notion.so/)") # תחליף את הלינק הזה בלינק שלך
+    
+    st.markdown("---")
+    
+    # הכנה למוניטציה (Newsletter / Premium)
+    st.markdown("**💎 Premium Insights**")
+    st.info("Want to see exactly what assets I accumulate when the SII hits the 'Deep Fear' zone?")
+    st.button("Join the Waitlist (Coming Soon)", use_container_width=True)
+    
+    st.markdown("---")
+    st.caption("Disclaimer: This index is for informational purposes only and does not constitute financial advice. Skin in the game: I trade my own capital using these exact signals.")
 # --- 2. DATA ACQUISITION (Live Data) ---
 @st.cache_data(ttl=3600)
 def get_market_data():

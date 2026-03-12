@@ -41,28 +41,53 @@ with st.sidebar:
 @st.cache_data(ttl=3600)
 def get_market_data():
     tickers = ['^VIX', 'SPY', 'RSP', 'HYG', 'IEF']
-    # מושכים נתונים מרוכזים כדי להבטיח שכל העמודות קיימות
-    df = yf.download(tickers, period="6mo", progress=False)['Close']
-    return df
+    try:
+        # מושכים נתונים בצורה מוגנת
+        df = yf.download(tickers, period="6mo", progress=False)
+        
+        # טיפול בשינויים של Yahoo Finance (מבנה MultiIndex)
+        if isinstance(df.columns, pd.MultiIndex):
+            if 'Close' in df.columns.levels[0]:
+                df = df['Close']
+            elif 'Adj Close' in df.columns.levels[0]:
+                df = df['Adj Close']
+        
+        return df
+    except Exception:
+        return pd.DataFrame()
 
 with st.spinner('Fetching real-time market data...'):
     df = get_market_data()
 
-# חגורת בטיחות למקרה של ניתוק מוחלט מהשרת
-if df.empty or '^VIX' not in df.columns:
-    st.warning("⚠️ Waiting for Yahoo Finance to sync data...")
+# חגורת בטיחות ראשונה: בדיקה שהורדנו נתונים
+if df is None or df.empty:
+    st.warning("⚠️ Waiting for Yahoo Finance to sync data (Connection Issue)...")
     st.stop()
 
-# פקודת הקסם: ממלאת חללים של היום עם הנתון האחרון (יום שישי)
-df_clean = df.ffill()
+# חגורת בטיחות שנייה: וידוא שכל עמודות הטיקרים קיימות
+required_tickers = ['^VIX', 'SPY', 'RSP', 'HYG', 'IEF']
+missing_tickers = [t for t in required_tickers if t not in df.columns]
+
+if missing_tickers:
+    st.warning(f"⚠️ Yahoo Finance is temporarily missing data for: {', '.join(missing_tickers)}. Retrying soon...")
+    st.stop()
+
+# פקודת הקסם: ממלאת חללים (NaN) עם הנתון ההיסטורי האחרון הזמין
+df_clean = df.ffill().dropna(how='all')
 
 try:
-    # שליפת הנתון האחרון שידוע לנו
+    # שליפת הנתונים בצורה החסינה ביותר (חישוב -> סינון ריקים -> נתון אחרון)
     vix_val = df_clean['^VIX'].dropna().iloc[-1]
-    breadth_val = (df_clean['RSP'] / df_clean['SPY']).dropna().iloc[-1]
-    credit_val = (df_clean['HYG'] / df_clean['IEF']).dropna().iloc[-1]
-except Exception:
-    st.warning("⚠️ Yahoo Finance is temporarily syncing specific tickers. Waiting for market open...")
+    
+    breadth_series = (df_clean['RSP'] / df_clean['SPY']).dropna()
+    breadth_val = breadth_series.iloc[-1]
+    
+    credit_series = (df_clean['HYG'] / df_clean['IEF']).dropna()
+    credit_val = credit_series.iloc[-1]
+
+except Exception as e:
+    # במקרה נדיר של שגיאה, השרת יעצור באלגנטיות
+    st.warning("⚠️ Market data is currently syncing. Please refresh the page in a few moments.")
     st.stop()
 
 # --- 3. SCORING ENGINE (The Math) ---

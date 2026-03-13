@@ -41,19 +41,23 @@ with st.sidebar:
 @st.cache_data(ttl=3600)
 def get_market_data():
     tickers = ['^VIX', 'SPY', 'RSP', 'HYG', 'IEF']
-    try:
-        # מושכים נתונים בצורה מוגנת
-        df = yf.download(tickers, period="6mo", progress=False)
-        
-        # טיפול בשינויים של Yahoo Finance (מבנה MultiIndex)
-        if isinstance(df.columns, pd.MultiIndex):
-            if 'Close' in df.columns.levels[0]:
-                df = df['Close']
-            elif 'Adj Close' in df.columns.levels[0]:
-                df = df['Adj Close']
-        
-        return df
-    except Exception:
+    data_dict = {}
+    
+    for t in tickers:
+        try:
+            # משיכת נתונים פרטנית לכל טיקר (מונע קריסות של טבלאות מורכבות)
+            ticker_data = yf.Ticker(t).history(period="6mo")
+            if not ticker_data.empty and 'Close' in ticker_data.columns:
+                # מסירים אזור זמן כדי למנוע התנגשויות באיחוד הטבלה
+                ticker_data.index = ticker_data.index.tz_localize(None)
+                data_dict[t] = ticker_data['Close']
+        except Exception:
+            pass
+            
+    # איחוד כל עמודות הטיקרים לטבלה אחת נקייה
+    if data_dict:
+        return pd.DataFrame(data_dict)
+    else:
         return pd.DataFrame()
 
 with st.spinner('Fetching real-time market data...'):
@@ -61,33 +65,26 @@ with st.spinner('Fetching real-time market data...'):
 
 # חגורת בטיחות ראשונה: בדיקה שהורדנו נתונים
 if df is None or df.empty:
-    st.warning("⚠️ Waiting for Yahoo Finance to sync data (Connection Issue)...")
-    st.stop()
-
-# חגורת בטיחות שנייה: וידוא שכל עמודות הטיקרים קיימות
-required_tickers = ['^VIX', 'SPY', 'RSP', 'HYG', 'IEF']
-missing_tickers = [t for t in required_tickers if t not in df.columns]
-
-if missing_tickers:
-    st.warning(f"⚠️ Yahoo Finance is temporarily missing data for: {', '.join(missing_tickers)}. Retrying soon...")
+    st.warning("⚠️ Yahoo Finance servers are currently unresponsive. Please wait a moment...")
     st.stop()
 
 # פקודת הקסם: ממלאת חללים (NaN) עם הנתון ההיסטורי האחרון הזמין
 df_clean = df.ffill().dropna(how='all')
 
 try:
-    # שליפת הנתונים בצורה החסינה ביותר (חישוב -> סינון ריקים -> נתון אחרון)
+    # וידוא שכל העמודות קיימות לפני החישוב
+    for required in ['^VIX', 'SPY', 'RSP', 'HYG', 'IEF']:
+        if required not in df_clean.columns:
+            raise ValueError(f"Missing data for {required}")
+
+    # שליפת הנתונים בצורה בטוחה
     vix_val = df_clean['^VIX'].dropna().iloc[-1]
-    
-    breadth_series = (df_clean['RSP'] / df_clean['SPY']).dropna()
-    breadth_val = breadth_series.iloc[-1]
-    
-    credit_series = (df_clean['HYG'] / df_clean['IEF']).dropna()
-    credit_val = credit_series.iloc[-1]
+    breadth_val = (df_clean['RSP'] / df_clean['SPY']).dropna().iloc[-1]
+    credit_val = (df_clean['HYG'] / df_clean['IEF']).dropna().iloc[-1]
 
 except Exception as e:
-    # במקרה נדיר של שגיאה, השרת יעצור באלגנטיות
-    st.warning("⚠️ Market data is currently syncing. Please refresh the page in a few moments.")
+    # הצגת השגיאה האמיתית כדי שנדע בדיוק מה הבעיה אם היא תחזור
+    st.error(f"System Error (Data Processing): {e}")
     st.stop()
 
 # --- 3. SCORING ENGINE (The Math) ---

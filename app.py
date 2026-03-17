@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
 import math
+import time
 
 # --- 1. PAGE SETUP (Website Settings) ---
 # שינוי משמעותי: מעבר ל- "wide" layout כדי לנצל את כל המסך
@@ -44,17 +45,21 @@ def get_market_data():
     data_dict = {}
     
     for t in tickers:
-        try:
-            # משיכת נתונים פרטנית לכל טיקר (מונע קריסות של טבלאות מורכבות)
-            ticker_data = yf.Ticker(t).history(period="6mo")
-            if not ticker_data.empty and 'Close' in ticker_data.columns:
-                # מסירים אזור זמן כדי למנוע התנגשויות באיחוד הטבלה
-                ticker_data.index = ticker_data.index.tz_localize(None)
-                data_dict[t] = ticker_data['Close']
-        except Exception:
-            pass
+        # מנגנון ניסיונות חוזרים: ננסה עד 3 פעמים לכל טיקר
+        for attempt in range(3):
+            try:
+                ticker_data = yf.Ticker(t).history(period="6mo")
+                if not ticker_data.empty and 'Close' in ticker_data.columns:
+                    ticker_data.index = ticker_data.index.tz_localize(None)
+                    data_dict[t] = ticker_data['Close']
+                    break  # קיבלנו נתונים! שוברים את הלולאה ועוברים לטיקר הבא
+            except Exception:
+                pass
             
-    # איחוד כל עמודות הטיקרים לטבלה אחת נקייה
+            # אם הגענו לפה, סימן שהייתה שגיאה או שהנתונים ריקים.
+            # נמתין שנייה אחת כדי לא "להספים" את יאהו, וננסה שוב.
+            time.sleep(1) 
+            
     if data_dict:
         return pd.DataFrame(data_dict)
     else:
